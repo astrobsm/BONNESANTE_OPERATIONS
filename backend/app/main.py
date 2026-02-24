@@ -10,14 +10,29 @@ from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.api import auth, inventory, sales, marketing, asal, disciplinary, kpi, sync
 
+# Ensure ALL models are registered with Base.metadata
+import app.models.user          # noqa: F401
+import app.models.inventory     # noqa: F401
+import app.models.sales         # noqa: F401
+import app.models.marketing     # noqa: F401
+import app.models.asal          # noqa: F401
+import app.models.disciplinary  # noqa: F401
+import app.models.kpi           # noqa: F401
+import app.models.sync          # noqa: F401
+
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create tables on startup (use Alembic migrations in production)."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        # Tables/enums may already exist (e.g. Neon/Supabase)
+        import logging
+        logging.getLogger("uvicorn.error").warning(f"create_all note: {e}")
     yield
     await engine.dispose()
 
