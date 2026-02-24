@@ -3,7 +3,7 @@ Security utilities: JWT, password hashing, device binding.
 """
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-from jose import JWTError, jwt
+import jwt
 import bcrypt
 from fastapi import HTTPException, status
 from app.core.config import get_settings
@@ -39,7 +39,7 @@ def decode_token(token: str) -> Dict[str, Any]:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
-    except JWTError:
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
