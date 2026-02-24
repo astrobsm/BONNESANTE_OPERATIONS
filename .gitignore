@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Environment secrets
+backend/.env
+frontend/.env.production
+frontend/.env.local
+
+# Build output
+frontend/dist/
+backend/*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.mypy_cache/
+.pytest_cache/
+*.log
