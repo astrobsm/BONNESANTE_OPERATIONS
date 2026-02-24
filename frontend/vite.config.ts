@@ -38,17 +38,7 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          {
-            // Also cache onrender.com API requests in production
-            urlPattern: /^https:\/\/bonnesante-backend\.onrender\.com\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache-prod',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
-              networkTimeoutSeconds: 10,
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
+
         ],
         // Background sync for offline mutations
         cleanupOutdatedCaches: true,

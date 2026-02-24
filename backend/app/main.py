@@ -25,14 +25,15 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create tables on startup (use Alembic migrations in production)."""
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except Exception as e:
-        # Tables/enums may already exist (e.g. Neon/Supabase)
-        import logging
-        logging.getLogger("uvicorn.error").warning(f"create_all note: {e}")
+    """Create tables on startup (skip on Vercel serverless — tables pre-created)."""
+    import os
+    if os.environ.get("VERCEL") != "1":
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception as e:
+            import logging
+            logging.getLogger("uvicorn.error").warning(f"create_all note: {e}")
     yield
     await engine.dispose()
 

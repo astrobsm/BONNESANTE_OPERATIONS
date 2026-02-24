@@ -11,10 +11,9 @@ declare let self: ServiceWorkerGlobalScope;
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Helper: does the request target our API?
+// Helper: does the request target our API? (same origin on Vercel)
 const isApiRequest = ({ url }: { url: URL }) =>
-  url.pathname.startsWith('/api/') ||
-  url.hostname === 'bonnesante-backend.onrender.com';
+  url.pathname.startsWith('/api/');
 
 // Cache API calls with NetworkFirst (try network, fall back to cache)
 registerRoute(

@@ -2,9 +2,15 @@
 BONNESANTE MEDICALS — ASAL Enterprise System
 Core configuration module.
 """
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import List
+
+# Resolve .env path — works both locally (cwd=backend/) and on Vercel (cwd=repo root)
+_backend_dir = Path(__file__).resolve().parent.parent.parent  # backend/
+_env_file = _backend_dir / ".env" if (_backend_dir / ".env").exists() else ".env"
 
 
 class Settings(BaseSettings):
@@ -45,7 +51,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
     class Config:
-        env_file = ".env"
+        env_file = str(_env_file)
         case_sensitive = True
 
 
