@@ -11,9 +11,14 @@ declare let self: ServiceWorkerGlobalScope;
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Helper: does the request target our API?
+const isApiRequest = ({ url }: { url: URL }) =>
+  url.pathname.startsWith('/api/') ||
+  url.hostname === 'bonnesante-backend.onrender.com';
+
 // Cache API calls with NetworkFirst (try network, fall back to cache)
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url }) => isApiRequest({ url }) && !['POST', 'PUT', 'PATCH', 'DELETE'].includes(''),
   new NetworkFirst({
     cacheName: 'api-cache',
     plugins: [
@@ -82,7 +87,7 @@ const bgSyncPlugin = new BackgroundSyncPlugin('offline-sync-queue', {
 // Queue failed mutation requests for background sync
 registerRoute(
   ({ url, request }) =>
-    url.pathname.startsWith('/api/') &&
+    isApiRequest({ url }) &&
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method),
   new NetworkFirst({
     cacheName: 'api-mutations',
@@ -93,7 +98,7 @@ registerRoute(
 
 registerRoute(
   ({ url, request }) =>
-    url.pathname.startsWith('/api/') &&
+    isApiRequest({ url }) &&
     ['PUT', 'PATCH'].includes(request.method),
   new NetworkFirst({
     cacheName: 'api-mutations',

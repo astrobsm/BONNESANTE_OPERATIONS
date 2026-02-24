@@ -28,15 +28,32 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\..*/i,
+            // Cache API responses — matches both /api/* (dev proxy) and full backend URL (prod)
+            urlPattern: /\/api\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
               networkTimeoutSeconds: 10,
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Also cache onrender.com API requests in production
+            urlPattern: /^https:\/\/bonnesante-backend\.onrender\.com\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache-prod',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
+              networkTimeoutSeconds: 10,
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
+        // Background sync for offline mutations
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
