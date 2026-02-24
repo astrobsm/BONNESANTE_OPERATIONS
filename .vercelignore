@@ -1,0 +1,8 @@
+# Exclude from Vercel upload
+frontend/node_modules
+backend/__pycache__
+backend/.venv
+backend/venv
+**/__pycache__
+*.pyc
+.git
