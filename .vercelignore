@@ -1,9 +1,12 @@
 # Exclude from Vercel upload
+node_modules
 frontend/node_modules
+.venv
 backend/.venv
 backend/venv
 backend/alembic
 backend/__pycache__
+.mypy_cache
 **/__pycache__
 **/.venv
 **/venv
