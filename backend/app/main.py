@@ -45,6 +45,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Global exception handler for debugging
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    tb = traceback.format_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "type": type(exc).__name__, "traceback": tb},
+    )
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -78,3 +90,18 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/debug/db")
+async def debug_db():
+    """Temporary debug endpoint to test DB connectivity."""
+    import traceback
+    try:
+        from app.core.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as session:
+            from sqlalchemy import text
+            result = await session.execute(text("SELECT 1"))
+            val = result.scalar()
+            return {"db": "connected", "result": val}
+    except Exception as e:
+        return {"db": "error", "error": str(e), "traceback": traceback.format_exc()}
