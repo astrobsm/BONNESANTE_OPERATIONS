@@ -5,6 +5,7 @@ Core configuration module.
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from functools import lru_cache
 from typing import List
 
@@ -45,6 +46,17 @@ class Settings(BaseSettings):
 
     # Redis (optional — set to empty string to disable)
     REDIS_URL: str = ""
+
+    # Strip trailing whitespace/newlines from all string env vars
+    # (Vercel CLI can inject \r\n when piping values)
+    @field_validator(
+        "DATABASE_URL", "SECRET_KEY", "ALGORITHM", "ALLOWED_ORIGINS",
+        "ENVIRONMENT", "REDIS_URL", "APP_NAME",
+        mode="before",
+    )
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
 
     @property
     def cors_origins(self) -> List[str]:
