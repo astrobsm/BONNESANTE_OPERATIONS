@@ -79,6 +79,7 @@ app.include_router(sync.router, prefix=API_PREFIX)
 
 
 @app.get("/")
+@app.get("/api/")
 async def root():
     return {
         "system": settings.APP_NAME,
@@ -88,11 +89,12 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
 
 
-@app.get("/debug/db")
+@app.get("/api/debug/db")
 async def debug_db():
     """Temporary debug endpoint to test DB connectivity."""
     import traceback
