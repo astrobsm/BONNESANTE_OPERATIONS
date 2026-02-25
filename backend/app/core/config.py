@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     @property
     def async_database_url(self) -> str:
         """Normalize any Postgres URL to use the asyncpg driver."""
-        url = self.DATABASE_URL
+        url = self.DATABASE_URL.strip()
         # Vercel/Neon gives postgres:// — convert to postgresql+asyncpg://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)

@@ -52,6 +52,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
         device_id=body.device_id,
     )
     db.add(audit)
+    await db.commit()
 
     return TokenResponse(
         access_token=access_token,

@@ -22,22 +22,36 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>();
 
+  const getDeviceId = (): string => {
+    let id = localStorage.getItem('bs_device_id');
+    if (!id) {
+      id = crypto.randomUUID?.() || `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem('bs_device_id', id);
+    }
+    return id;
+  };
+
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams();
-      params.append('username', data.email);
-      params.append('password', data.password);
-
-      const res = await api.post('/auth/login', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      const res = await api.post('/auth/login', {
+        email: data.email,
+        password: data.password,
+        device_id: getDeviceId(),
       });
 
       setAuth(res.data.user, res.data.access_token, res.data.refresh_token);
       navigate('/', { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Check your credentials.');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg || String(d)).join('; '));
+      } else {
+        setError('Login failed. Check your credentials.');
+      }
     } finally {
       setLoading(false);
     }

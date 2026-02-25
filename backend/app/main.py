@@ -96,12 +96,28 @@ async def health_check():
 async def debug_db():
     """Temporary debug endpoint to test DB connectivity."""
     import traceback
+    import os
+    db_url = os.environ.get("DATABASE_URL", "NOT_SET")
+    # Mask password
+    masked = db_url[:20] + "***" + db_url[-30:] if len(db_url) > 50 else db_url
+    info = {
+        "db_url_repr": repr(db_url[:60]),
+        "db_url_masked": masked,
+        "db_url_len": len(db_url),
+        "has_newline": "\n" in db_url or "\r" in db_url,
+        "vercel_env": os.environ.get("VERCEL", "NOT_SET"),
+    }
     try:
         from app.core.database import AsyncSessionLocal
         async with AsyncSessionLocal() as session:
             from sqlalchemy import text
-            result = await session.execute(text("SELECT 1"))
+            result = await session.execute(text("SELECT 1 AS ok"))
             val = result.scalar()
-            return {"db": "connected", "result": val}
+            info["db"] = "connected"
+            info["result"] = val
     except Exception as e:
-        return {"db": "error", "error": str(e), "traceback": traceback.format_exc()}
+        info["db"] = "error"
+        info["error"] = str(e)
+        info["error_type"] = type(e).__name__
+        info["traceback"] = traceback.format_exc()
+    return info
