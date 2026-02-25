@@ -25,40 +25,50 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Users"])
 
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == body.email))
-    user = result.scalar_one_or_none()
+    import traceback as tb_mod
+    from fastapi.responses import JSONResponse
+    try:
+        result = await db.execute(select(User).where(User.email == body.email))
+        user = result.scalar_one_or_none()
 
-    if not user or not verify_password(body.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        if not user or not verify_password(body.password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
 
-    # Update device binding and last login
-    user.device_id = body.device_id
-    user.last_login = datetime.now(timezone.utc)
+        # Update device binding and last login
+        user.device_id = body.device_id
+        user.last_login = datetime.now(timezone.utc)
 
-    token_data = {"sub": str(user.id), "role": user.role.value, "device_id": body.device_id}
-    access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token(token_data)
+        token_data = {"sub": str(user.id), "role": user.role.value, "device_id": body.device_id}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
 
-    # Audit trail
-    audit = AuditLog(
-        user_id=user.id,
-        action="LOGIN",
-        resource_type="auth",
-        details={"device_id": body.device_id},
-        ip_address=request.client.host if request.client else None,
-        device_id=body.device_id,
-    )
-    db.add(audit)
-    await db.commit()
+        # Audit trail
+        audit = AuditLog(
+            user_id=user.id,
+            action="LOGIN",
+            resource_type="auth",
+            details={"device_id": body.device_id},
+            ip_address=request.client.host if request.client else None,
+            device_id=body.device_id,
+        )
+        db.add(audit)
+        await db.commit()
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user=UserOut.model_validate(user),
-    )
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=UserOut.model_validate(user),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"login_error": str(e), "type": type(e).__name__, "tb": tb_mod.format_exc()},
+        )
 
 
 @router.post("/refresh", response_model=TokenResponse)
