@@ -107,7 +107,8 @@ async def debug_db():
         "db_url_masked": masked,
         "db_url_len": len(db_url),
         "has_newline": "\n" in db_url or "\r" in db_url,
-        "vercel_env": os.environ.get("VERCEL", "NOT_SET"),
+        "vercel_env": repr(os.environ.get("VERCEL", "NOT_SET")),
+        "is_serverless": os.environ.get("VERCEL", "").strip() == "1",
     }
     try:
         from app.core.database import AsyncSessionLocal
@@ -123,3 +124,54 @@ async def debug_db():
         info["error_type"] = type(e).__name__
         info["traceback"] = traceback.format_exc()
     return info
+
+
+@app.post("/api/debug/login")
+async def debug_login():
+    """Test the login flow step by step."""
+    import traceback
+    steps = {}
+    try:
+        # Step 1: Test bcrypt import
+        import bcrypt
+        steps["bcrypt_import"] = "ok"
+
+        # Step 2: Test password hashing
+        test_hash = bcrypt.hashpw(b"test", bcrypt.gensalt()).decode()
+        steps["bcrypt_hash"] = "ok"
+
+        # Step 3: Test password verify
+        ok = bcrypt.checkpw(b"test", test_hash.encode())
+        steps["bcrypt_verify"] = ok
+
+        # Step 4: Test JWT
+        import jwt as pyjwt
+        token = pyjwt.encode({"sub": "test"}, "secret", algorithm="HS256")
+        steps["jwt_encode"] = "ok"
+        decoded = pyjwt.decode(token, "secret", algorithms=["HS256"])
+        steps["jwt_decode"] = decoded
+
+        # Step 5: Test DB - find admin user
+        from app.core.database import AsyncSessionLocal
+        from sqlalchemy import text
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                text("SELECT id, email, hashed_password, role FROM users WHERE email = :e"),
+                {"e": "emmanuelnnadi@astrobsm.edu.org"},
+            )
+            row = result.first()
+            if row:
+                steps["user_found"] = True
+                steps["user_email"] = row.email
+                steps["user_role"] = row.role
+                steps["hash_prefix"] = row.hashed_password[:20] + "..."
+                # Step 6: Test verify against actual hash
+                actual_ok = bcrypt.checkpw(b"blackvelvet", row.hashed_password.encode())
+                steps["password_match"] = actual_ok
+            else:
+                steps["user_found"] = False
+    except Exception as e:
+        steps["error"] = str(e)
+        steps["error_type"] = type(e).__name__
+        steps["traceback"] = traceback.format_exc()
+    return steps

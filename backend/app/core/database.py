@@ -23,7 +23,7 @@ if "sslmode=" in _db_url:
 # Build connect_args for cloud Postgres providers
 _connect_args: dict = {}
 _is_cloud = any(host in _db_url for host in ["neon.tech", "supabase.com", ":6543/"])
-_is_serverless = os.environ.get("VERCEL") == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+_is_serverless = os.environ.get("VERCEL", "").strip() == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
 
 if _is_cloud:
     ssl_ctx = ssl.create_default_context()
