@@ -3,7 +3,8 @@ User & Role Management model — RBAC.
 """
 import uuid
 import enum
-from datetime import datetime, timezone
+import secrets
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import (
     Column, String, Boolean, DateTime, Enum, Text, JSON, ForeignKey
 )
@@ -72,3 +73,19 @@ class AuditLog(Base):
     timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
     user = relationship("User", back_populates="audit_logs")
+
+
+class PasswordResetToken(Base):
+    """Secure time-limited password reset tokens."""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    token = Column(String(128), unique=True, nullable=False, index=True,
+                   default=lambda: secrets.token_urlsafe(48))
+    expires_at = Column(DateTime(timezone=True), nullable=False,
+                        default=lambda: datetime.now(timezone.utc) + timedelta(hours=1))
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User")

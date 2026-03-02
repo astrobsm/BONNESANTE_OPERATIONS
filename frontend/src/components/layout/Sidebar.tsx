@@ -7,6 +7,7 @@ import {
   ClipboardList,
   AlertTriangle,
   BarChart3,
+  Users,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -33,6 +34,7 @@ const navItems = [
   { to: "/asal/weekly-report", label: "Weekly Report", icon: ClipboardList, roles: ["all"] },
   { to: "/disciplinary", label: "Disciplinary", icon: AlertTriangle, roles: ["admin", "hr_management"] },
   { to: "/kpi", label: "KPI Dashboard", icon: BarChart3, roles: ["admin", "hr_management", "sales_manager"] },
+  { to: "/users", label: "User Management", icon: Users, roles: ["admin", "hr_management"] },
 ];
 
 export default function Sidebar() {

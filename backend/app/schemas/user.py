@@ -86,6 +86,25 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
+# ─── Password Reset ──────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+
+class AdminPasswordReset(BaseModel):
+    new_password: str = Field(..., min_length=8)
+
+
+class ToggleUserActiveRequest(BaseModel):
+    is_active: bool
+
+
 # ─── Audit ────────────────────────────────────────────────────────────
 
 class AuditLogOut(BaseModel):

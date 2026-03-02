@@ -17,6 +17,8 @@ import WeeklyPlanPage from '@/pages/asal/WeeklyPlanPage';
 import WeeklyReportPage from '@/pages/asal/WeeklyReportPage';
 import DisciplinaryPage from '@/pages/DisciplinaryPage';
 import KPIDashboardPage from '@/pages/KPIDashboardPage';
+import UserManagementPage from '@/pages/UserManagementPage';
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.accessToken);
@@ -29,6 +31,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route
           path="/"
           element={
@@ -52,6 +55,7 @@ export default function App() {
           <Route path="asal/weekly-report" element={<WeeklyReportPage />} />
           <Route path="disciplinary" element={<DisciplinaryPage />} />
           <Route path="kpi" element={<KPIDashboardPage />} />
+          <Route path="users" element={<UserManagementPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
