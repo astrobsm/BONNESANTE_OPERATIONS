@@ -3,8 +3,8 @@ import { useAuthStore } from '@/stores/authStore';
 import api from '@/services/api';
 import { PageHeader, Card, Button } from '@/components/ui';
 import {
-  Users, UserPlus, Search, Shield, ShieldOff,
-  KeyRound, Edit, ChevronLeft, ChevronRight, X,
+  UserPlus, Search, Shield, ShieldOff,
+  KeyRound, SquarePen, ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
 
 interface UserItem {
@@ -196,6 +196,7 @@ export default function UserManagementPage() {
         <select
           value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+          title="Filter by role"
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
           <option value="">All Roles</option>
@@ -206,6 +207,7 @@ export default function UserManagementPage() {
         <select
           value={activeFilter}
           onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}
+          title="Filter by status"
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
           <option value="">All Status</option>
@@ -255,7 +257,7 @@ export default function UserManagementPage() {
                     {u.last_login ? new Date(u.last_login).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-3 px-4 text-right space-x-1">
-                    <button onClick={() => openEdit(u)} title="Edit" className="p-1.5 rounded hover:bg-gray-100"><Edit size={15} /></button>
+                    <button onClick={() => openEdit(u)} title="Edit" className="p-1.5 rounded hover:bg-gray-100"><SquarePen size={15} /></button>
                     <button onClick={() => openResetPw(u)} title="Reset Password" className="p-1.5 rounded hover:bg-gray-100"><KeyRound size={15} /></button>
                     <button onClick={() => handleToggleActive(u)} title={u.is_active ? 'Deactivate' : 'Activate'}
                       className={`p-1.5 rounded hover:bg-gray-100 ${u.id === currentUser?.id ? 'opacity-30 cursor-not-allowed' : ''}`}
@@ -275,8 +277,8 @@ export default function UserManagementPage() {
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 text-sm text-gray-600">
             <span>Page {page} of {totalPages} ({total} users)</span>
             <div className="flex gap-2">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronLeft size={18} /></button>
-              <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronRight size={18} /></button>
+              <button disabled={page <= 1} onClick={() => setPage(page - 1)} title="Previous page" className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronLeft size={18} /></button>
+              <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} title="Next page" className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><ChevronRight size={18} /></button>
             </div>
           </div>
         )}
@@ -294,7 +296,7 @@ export default function UserManagementPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
               <select value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                title="Select role" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
@@ -318,7 +320,7 @@ export default function UserManagementPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
               <select value={editForm.role || ''} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                title="Select role" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
@@ -354,7 +356,7 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100"><X size={18} /></button>
+          <button onClick={onClose} title="Close" className="p-1 rounded hover:bg-gray-100"><X size={18} /></button>
         </div>
         <div className="px-6 py-4">{children}</div>
       </div>
@@ -375,6 +377,7 @@ function Input({ label, value, onChange, type = 'text', required, minLength }: {
         onChange={(e) => onChange(e.target.value)}
         required={required}
         minLength={minLength}
+        placeholder={label}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
       />
     </div>

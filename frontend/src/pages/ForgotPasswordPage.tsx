@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '@/services/api';
 import { Button } from '@/components/ui';
-import { ArrowLeft, Mail, KeyRound, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, KeyRound, CircleCheckBig } from 'lucide-react';
 
 type Step = 'email' | 'reset' | 'done';
 
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
           {/* Step 3: Success */}
           {step === 'done' && (
             <div className="text-center py-4">
-              <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
+              <CircleCheckBig size={48} className="mx-auto text-green-500 mb-4" />
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Password Reset!</h2>
               <p className="text-sm text-gray-500 mb-6">{message}</p>
               <Link to="/login" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700">
