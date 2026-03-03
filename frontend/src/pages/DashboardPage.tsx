@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useSyncStore } from '@/stores/syncStore';
 import { PageHeader, StatCard, Card } from '@/components/ui';
 import api from '@/services/api';
+import { apiGet } from '@/services/api';
 import {
   Package,
   ShoppingCart,
@@ -29,9 +30,24 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const { isOnline, pendingCount, lastSyncTime } = useSyncStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [orderCount, setOrderCount] = useState<number>(0);
+  const [alertCount, setAlertCount] = useState<number>(0);
+  const [dailyLogStatus, setDailyLogStatus] = useState<string>('—');
 
   useEffect(() => {
     api.get('/auth/dashboard-stats').then((r) => setStats(r.data)).catch(() => {});
+    // Fetch live counts for dashboard cards
+    apiGet<any[]>('/sales/orders').then(orders => {
+      setOrderCount(orders.filter(o => o.status === 'pending' || o.status === 'processing').length);
+    }).catch(() => {});
+    apiGet<any[]>('/disciplinary/records').then(recs => {
+      setAlertCount(recs.filter(r => r.status === 'pending' || r.status === 'escalated').length);
+    }).catch(() => {});
+    apiGet<any[]>('/asal/daily-logs').then(logs => {
+      const today = new Date().toISOString().slice(0, 10);
+      const todayLog = logs.find(l => l.log_date === today);
+      setDailyLogStatus(todayLog ? todayLog.status : 'Not submitted');
+    }).catch(() => setDailyLogStatus('—'));
   }, []);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'hr_management';
@@ -137,9 +153,9 @@ export default function DashboardPage() {
           changeType={pendingCount > 0 ? 'negative' : 'positive'}
           change={pendingCount === 0 ? 'All synced' : 'Needs sync'}
         />
-        <StatCard label="Daily Log Status" value="—" icon={<ClipboardList size={20} />} change="Submit your daily log" />
-        <StatCard label="Open Orders" value="—" icon={<ShoppingCart size={20} />} change="View all orders" />
-        <StatCard label="Alerts" value="—" icon={<AlertTriangle size={20} />} change="No active alerts" changeType="positive" />
+        <StatCard label="Daily Log Status" value={dailyLogStatus} icon={<ClipboardList size={20} />} change="Today's daily log" />
+        <StatCard label="Open Orders" value={orderCount} icon={<ShoppingCart size={20} />} change="Pending / processing" />
+        <StatCard label="Alerts" value={alertCount} icon={<AlertTriangle size={20} />} change={alertCount === 0 ? 'No active alerts' : `${alertCount} active`} changeType={alertCount === 0 ? 'positive' : 'negative'} />
       </div>
 
       {/* Quick Actions */}

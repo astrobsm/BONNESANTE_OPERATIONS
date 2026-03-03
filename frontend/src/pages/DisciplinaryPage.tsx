@@ -1,62 +1,102 @@
+﻿import { useState, useEffect, useCallback } from 'react';
 import { PageHeader, Card, Badge } from '@/components/ui';
+import { apiGet } from '@/services/api';
 
-const mockRecords = [
-  { id: '1', employee: 'A. Wanjiku', query_type: 'missed_daily_log', consecutive_count: 3, status: 'pending_acknowledgement', deduction_pct: 0, created_at: '2026-02-20', privileges_locked: true },
-  { id: '2', employee: 'P. Kimani', query_type: 'late_weekly_plan', consecutive_count: 1, status: 'acknowledged', deduction_pct: 5, created_at: '2026-02-15', privileges_locked: false },
-  { id: '3', employee: 'M. Odhiambo', query_type: 'late_weekly_report', consecutive_count: 2, status: 'appealed', deduction_pct: 20, created_at: '2026-02-10', privileges_locked: false },
-];
+interface DisciplinaryRecord {
+  id: string;
+  record_id: string;
+  user_id: string;
+  query_type: string;
+  status: string;
+  consecutive_count: number;
+  payroll_deduction_percentage: number;
+  privileges_locked: boolean;
+  notes: string | null;
+  created_at: string;
+}
 
-const mockPayroll = [
-  { id: '1', employee: 'P. Kimani', month: 'February 2026', base: 85000, allowances: 15000, compliance_deduction: 5000, net: 95000, status: 'pending_approval' },
-  { id: '2', employee: 'All Staff', month: 'January 2026', base: null, allowances: null, compliance_deduction: null, net: null, status: 'approved' },
-];
+interface Payroll {
+  id: string;
+  payroll_id: string;
+  user_id: string;
+  month: number;
+  year: number;
+  salary_base: number;
+  deductions: number;
+  net_pay: number;
+  status: string;
+  created_at: string;
+}
 
 export default function DisciplinaryPage() {
-  const statusColor = (s: string) => {
-    switch (s) {
-      case 'pending_acknowledgement': return 'yellow';
-      case 'acknowledged': return 'blue';
-      case 'appealed': return 'blue';
-      case 'resolved': return 'green';
-      case 'termination_flagged': return 'red';
-      default: return 'gray';
+  const [records, setRecords] = useState<DisciplinaryRecord[]>([]);
+  const [payroll, setPayroll] = useState<Payroll[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+  const [loadingPayroll, setLoadingPayroll] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchRecords = useCallback(async () => {
+    try {
+      setLoadingRecords(true);
+      const data = await apiGet<DisciplinaryRecord[]>('/disciplinary/records');
+      setRecords(data);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Failed to load disciplinary records');
+    } finally {
+      setLoadingRecords(false);
     }
-  };
+  }, []);
+
+  const fetchPayroll = useCallback(async () => {
+    try {
+      setLoadingPayroll(true);
+      const data = await apiGet<Payroll[]>('/disciplinary/payroll');
+      setPayroll(data);
+    } catch (err: any) {
+      setError(prev => prev || (err?.response?.data?.detail || 'Failed to load payroll'));
+    } finally {
+      setLoadingPayroll(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchRecords(); fetchPayroll(); }, [fetchRecords, fetchPayroll]);
 
   return (
     <div>
-      <PageHeader
-        title="Disciplinary Records"
-        subtitle="Auto-generated compliance queries and payroll deduction tracking"
-      />
+      <PageHeader title="Disciplinary & Payroll" subtitle="Track queries, deductions, privilege locks, and payroll impact" />
+      {error && <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>}
 
-      {/* Disciplinary Queries */}
-      <Card title="Active Queries" className="mb-6">
+      <Card className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Disciplinary Records</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left py-3 px-4 font-medium text-gray-500">Employee</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">Record ID</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">User</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Type</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-500">Count</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Count</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Deduction %</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">Locked</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Deduction</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-500">Locked</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Date</th>
               </tr>
             </thead>
             <tbody>
-              {mockRecords.map((r) => (
+              {loadingRecords ? (
+                <tr><td colSpan={8} className="py-8 text-center text-gray-400">Loading...</td></tr>
+              ) : records.length === 0 ? (
+                <tr><td colSpan={8} className="py-8 text-center text-gray-400">No disciplinary records.</td></tr>
+              ) : records.map((r) => (
                 <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-gray-900">{r.employee}</td>
-                  <td className="py-3 px-4 text-gray-600">{r.query_type.replace(/_/g, ' ')}</td>
-                  <td className="py-3 px-4 text-center font-semibold">{r.consecutive_count}</td>
-                  <td className="py-3 px-4"><Badge color={statusColor(r.status)}>{r.status.replace(/_/g, ' ')}</Badge></td>
-                  <td className="py-3 px-4 text-right">{r.deduction_pct}%</td>
-                  <td className="py-3 px-4 text-center">
-                    {r.privileges_locked ? <Badge color="red">Yes</Badge> : <Badge color="green">No</Badge>}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{r.created_at}</td>
+                  <td className="py-3 px-4 font-mono text-xs">{r.record_id}</td>
+                  <td className="py-3 px-4 font-mono text-xs text-gray-500">{r.user_id}</td>
+                  <td className="py-3 px-4">{r.query_type}</td>
+                  <td className="py-3 px-4 text-right">{r.consecutive_count}</td>
+                  <td className="py-3 px-4 text-right font-semibold text-red-600">{r.payroll_deduction_percentage}%</td>
+                  <td className="py-3 px-4"><Badge color={r.privileges_locked ? 'red' : 'green'}>{r.privileges_locked ? 'Yes' : 'No'}</Badge></td>
+                  <td className="py-3 px-4"><Badge color={r.status === 'resolved' ? 'green' : r.status === 'escalated' ? 'red' : 'yellow'}>{r.status}</Badge></td>
+                  <td className="py-3 px-4 text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -64,33 +104,35 @@ export default function DisciplinaryPage() {
         </div>
       </Card>
 
-      {/* Payroll Impact */}
-      <Card title="Payroll (Compliance Deductions)">
+      <Card>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Summary</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left py-3 px-4 font-medium text-gray-500">Employee</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-500">Month</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Base</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Allowances</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Deduction</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Net</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">Payroll ID</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">User</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-500">Period</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Base Salary</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Deductions</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Net Pay</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
               </tr>
             </thead>
             <tbody>
-              {mockPayroll.map((p) => (
+              {loadingPayroll ? (
+                <tr><td colSpan={7} className="py-8 text-center text-gray-400">Loading...</td></tr>
+              ) : payroll.length === 0 ? (
+                <tr><td colSpan={7} className="py-8 text-center text-gray-400">No payroll records.</td></tr>
+              ) : payroll.map((p) => (
                 <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-gray-900">{p.employee}</td>
-                  <td className="py-3 px-4 text-gray-600">{p.month}</td>
-                  <td className="py-3 px-4 text-right">{p.base ? `KES ${p.base.toLocaleString()}` : '—'}</td>
-                  <td className="py-3 px-4 text-right">{p.allowances ? `KES ${p.allowances.toLocaleString()}` : '—'}</td>
-                  <td className="py-3 px-4 text-right text-red-600">{p.compliance_deduction ? `KES ${p.compliance_deduction.toLocaleString()}` : '—'}</td>
-                  <td className="py-3 px-4 text-right font-semibold">{p.net ? `KES ${p.net.toLocaleString()}` : '—'}</td>
-                  <td className="py-3 px-4">
-                    <Badge color={p.status === 'approved' ? 'green' : 'yellow'}>{p.status.replace('_', ' ')}</Badge>
-                  </td>
+                  <td className="py-3 px-4 font-mono text-xs">{p.payroll_id}</td>
+                  <td className="py-3 px-4 font-mono text-xs text-gray-500">{p.user_id}</td>
+                  <td className="py-3 px-4">{p.month}/{p.year}</td>
+                  <td className="py-3 px-4 text-right">KES {p.salary_base.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-right text-red-600">KES {p.deductions.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-right font-semibold text-green-700">KES {p.net_pay.toLocaleString()}</td>
+                  <td className="py-3 px-4"><Badge color={p.status === 'paid' ? 'green' : p.status === 'pending' ? 'yellow' : 'red'}>{p.status}</Badge></td>
                 </tr>
               ))}
             </tbody>
